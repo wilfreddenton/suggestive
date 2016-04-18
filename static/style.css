@@ -1,0 +1,55 @@
+.container {
+  position: relative;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 18px;
+  font-family: monospace
+}
+#textbox {
+  width: 100%;
+  position: relative;
+  z-index: 100;
+  font-family: monospace;
+  border: 1px solid #ccc;
+  padding: 8px;
+}
+#textbox:focus {
+  outline: none;
+  border: 1px solid #4D89FF;
+}
+#suggestions {
+  width: 100%;
+  max-width: 100%;
+  position: relative;
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+#suggestions li {
+  display: inline-block;
+  border-top: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+  margin-bottom: -1px;
+  padding: 8px;
+  transition: background 100ms;
+  cursor: pointer;
+}
+#suggestions li:hover {
+  background: #eee;
+}
+#suggestions li:first-child {
+  border-left: 1px solid #ccc;
+}
+.suggestion {
+  margin-top: 25px;
+  position: relative;
+}
+.suggestion-number {
+  position: absolute;
+  top: -20px;
+  text-align: center;
+  width: 100%;
+  left: 0px;
+  color: #ccc;
+}

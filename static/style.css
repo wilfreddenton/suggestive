@@ -8,9 +8,14 @@
 #textbox {
   width: 100%;
   position: relative;
+  box-sizing: border-box;
+  height: 50px;
   z-index: 100;
   font-family: monospace;
   border: 1px solid #ccc;
+  font-size: 14px;
+  resize: none;
+  overflow: hidden;
   padding: 8px;
 }
 #textbox:focus {
@@ -52,4 +57,17 @@
   width: 100%;
   left: 0px;
   color: #ccc;
+}
+#history {
+  width: 100%;
+  max-width: 100%;
+  position: relative;
+  font-size:14px;
+  list-style-type: none;
+  margin: 0 0 10px 0;
+  padding: 0; 
+}
+#history li {
+  position: relative;
+  padding: 10px;
 }

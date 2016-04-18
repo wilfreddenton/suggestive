@@ -84,12 +84,14 @@
   // initialization
   var state = {
     text: '',
-    suggestions: []
+    suggestions: [],
+    messages: []
   };
   var ripples = new Ripples(state);
   var refs = {
     textbox: document.getElementById('textbox'),
-    suggestions: document.getElementById('suggestions')
+    suggestions: document.getElementById('suggestions'),
+    history: document.getElementById('history')
   };
   var suggestionTemplate = function(suggestion, i) {
     return (
@@ -99,34 +101,67 @@
       ]]
     );
   };
+  var messageTemplate = function(message, i) {
+    return (
+      ['li', {className: 'message'}, [
+        ['span', {className: 'message-text'}, message.text]
+      ]]
+    );
+  }
   // handlers
   var baseUrl = 'http://localhost:5000/api';
+  var postMessage = function() {
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.onreadystatechange = function() {
+      if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+        console.log(xmlHttp.responseText)
+    }
+    xmlHttp.open("POST", baseUrl+"/message", true);
+    xmlHttp.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+    payload = {
+      message: ripples.state.messages[ripples.state.messages.length - 1]
+    }
+    xmlHttp.send(JSON.stringify(payload));
+  }
   var getSuggestions = function() {
     var xmlHttp = new XMLHttpRequest();
     xmlHttp.onreadystatechange = function() {
       if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
         ripples.setState({ suggestions: JSON.parse(xmlHttp.responseText).suggestions});
     }
-    xmlHttp.open("GET", baseUrl+"/suggestions"+"?text="+ripples.state.text, true); // true for asynchronous
+    xmlHttp.open("GET", baseUrl+"/suggestions?text="+ripples.state.text, true);
     xmlHttp.send(null);
   }
   var test = debounce(function(e) {
     getSuggestions()
-  }, 100);
+  }, 150);
+  var enterHandler = function (e) {
+    if (e.keyCode === 13 && e.metaKey) {
+      var message = {text: refs.textbox.value.trim()}
+      var messages = ripples.state.messages.slice();
+      messages.push(message);
+      ripples.setState({messages: messages});
+      postMessage();
+      refs.textbox.value = '';
+      ripples.setState({ text: refs.textbox.value })
+      test();
+    }
+  }
   var inputHandler = function(e) {
+    refs.textbox.style.height = '0px'
+    refs.textbox.style.height = Math.max(50,this.scrollHeight)+'px';
     ripples.setState({ text: e.target.value });
     test(e);
   }
   var selectHandler = function(e) {
     var num = parseInt(this.childNodes[0].innerHTML)
-    console.log(num, ripples.state.suggestions.length)
     suggestion = ripples.state.suggestions[num - 1].text;
-    if (ripples.state.text.match(/\s+$/) === null) {
+    if (ripples.state.text.length > 0 && ripples.state.text.match(/\s+$/) === null) {
       suggestion = " " + suggestion;
     }
     refs.textbox.value += suggestion;
-    ripples.setState({ text: refs.textbox.value })
-    test()
+    ripples.setState({ text: refs.textbox.value });
+    test();
   }
   var commandHandler = function(e) {
     if (e.keyCode >= 48 && e.keyCode <= 57) {
@@ -148,9 +183,16 @@
       suggestion.addEventListener('click', selectHandler, true);
     })
   }
+  var historyReaction = function() {
+    var template = ripples.state.messages.map(messageTemplate);
+    refs.history.innerHTML = '';
+    refs.history.appendChild(ripples.render(template));
+  }
   // main
   ripples.ripple('suggestions', refs.suggestions, suggestionsReaction);
+  ripples.ripple('messages', refs.history, historyReaction);
   refs.textbox.addEventListener('keyup', inputHandler);
+  refs.textbox.addEventListener('keydown', enterHandler);
   window.addEventListener('keydown', commandHandler);
   getSuggestions();
 })(window);

@@ -2,6 +2,7 @@ import pickle
 import random
 import re
 import nltk
+from collections import Counter
 from flask import Flask, request, jsonify
 from unigram import Unigram
 from unigram_excerpt import UnigramExcerpt
@@ -26,6 +27,18 @@ def home():
         m.write('')
     return app.send_static_file('index.html')
 
+def filter_suggestions(suggestions):
+    count = Counter(suggestions)
+    if len(suggestions) >= 7:
+        high_prob_suggestions = [s[0] for s in count.most_common()[0:4]]
+        print high_prob_suggestions
+        suggestions = [s for s in suggestions if s not in high_prob_suggestions]
+        suggestions = random.sample(suggestions, 3 if len(suggestions) >= 3 else len(suggestions))
+        suggestions = high_prob_suggestions + suggestions
+    else:
+        suggestions = [s[0] for s in count.most_common()]
+    return suggestions
+
 @app.route('/api/suggestions', methods=['GET'])
 def suggestions():
     data = request.get_json()
@@ -36,7 +49,6 @@ def suggestions():
     else:
         words = []
     words = [word[0].upper()+word[1:] if 'i' == word or 'i\'' in word else word for word in words]
-    print words
     key = []
     # set key
     if len(words) == 1:
@@ -47,22 +59,25 @@ def suggestions():
     if len(key) == 2:
         if key in trigram.word_map:
             suggestions = trigram.word_map[key]
-            suggestions = random.sample(suggestions, 6 if len(suggestions) >= 6 else len(suggestions))
+            suggestions = filter_suggestions(suggestions)
         else: # fallthrough to bigram
             key = key[-1]
     if isinstance(key, basestring):
         if key in bigram.word_map:
             suggestions = bigram.word_map[key]
-            suggestions = random.sample(suggestions, 6 if len(suggestions) >= 6 else len(suggestions))
+            suggestions = filter_suggestions(suggestions)
         else: # fallthrough to unigram
             key = []
     if len(key) == 0:
-        suggestions = unigram_generator.generate(3)
-        suggestions = [suggestion.title() if len(words) == 0 else suggestion for suggestion in suggestions]
+        suggestions = unigram.bag_of_words
+        suggestions = filter_suggestions(suggestions)
+        suggestions = [suggestion[0].upper()+suggestion[1:] if len(words) == 0 else suggestion for suggestion in suggestions]
     # look at previous messages
     with open('messages.txt') as m:
         messages = m.readlines()
     if len(messages) > 0:
+        if len(messages) > 5:
+            messages = messages[-5:]
         messages = map(nltk.word_tokenize, messages)
         tags = map(nltk.pos_tag, messages)
         tags = reduce(lambda x,y: x+y, tags)

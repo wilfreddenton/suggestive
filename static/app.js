@@ -96,7 +96,7 @@
   var suggestionTemplate = function(suggestion, i) {
     return (
       ['li', {className: 'suggestion'}, [
-        ['div', {className: 'suggestion-number'}, i + 1],
+        ['div', {className: 'suggestion-number'}, i < 9 ? i + 1 : 0],
         ['span', {className: 'suggestion-text'}, suggestion.text]
       ]]
     );
@@ -127,7 +127,9 @@
     var xmlHttp = new XMLHttpRequest();
     xmlHttp.onreadystatechange = function() {
       if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
-        ripples.setState({ suggestions: JSON.parse(xmlHttp.responseText).suggestions});
+        ripples.setState({ suggestions: JSON.parse(xmlHttp.responseText).suggestions.sort(function(a, b) {
+          return a.text > b.text;
+        }) });
     }
     xmlHttp.open("GET", baseUrl+"/suggestions?text="+ripples.state.text, true);
     xmlHttp.send(null);
@@ -155,7 +157,7 @@
   }
   var selectHandler = function(e) {
     var num = parseInt(this.childNodes[0].innerHTML)
-    suggestion = ripples.state.suggestions[num - 1].text;
+    suggestion = ripples.state.suggestions[num == 0 ? 9 : num - 1].text;
     if (ripples.state.text.length > 0 && ripples.state.text.match(/\s+$/) === null) {
       suggestion = " " + suggestion;
     }
@@ -168,7 +170,7 @@
       if (e.metaKey) {
         var i = parseInt(String.fromCharCode(e.keyCode));
         if (i <= ripples.state.suggestions.length) {
-          refs.suggestions.childNodes[i - 1].click();
+          refs.suggestions.childNodes[i == 0 ? 9 : i - 1].click();
         }
         event.preventDefault();
       }

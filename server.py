@@ -147,7 +147,7 @@ def suggestions():
         nouns = set(nouns)
         nouns = random.sample(nouns, 3 if len(nouns) >= 3 else len(nouns))
         suggestion_texts = [s[0] for s in suggestions]
-        nouns = [(n, 1) for n in nouns if n not in suggestion_texts]
+        nouns = [(n, 1 / float(len(nouns))) for n in nouns if n not in suggestion_texts]
         suggestions += nouns
     suggestions = set(suggestions)
     suggestions = [{'text': s[0], 'relevance': s[1]} for s in suggestions]

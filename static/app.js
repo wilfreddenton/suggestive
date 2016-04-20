@@ -58,11 +58,11 @@
       var tag = subTemp[0], params = subTemp[1], children = subTemp[2];
       var element = document.createElement(tag);
       for (var key in params) {
-        if (key === 'style') {
-          styles = params[key];
-          for (var styleName in styles)
-            element.style[styleName] = styles[styleName];
-        } else { element[key] = params[key]; }
+        param = params[key];
+        if (typeof param === 'object' && param && !Array.isArray(param)) {
+          for (var name in param)
+            element[key][name] = param[name];
+        } else { element[key] = param; }
       }
       if (Array.isArray(children)) {
         var childFrag = this.render(children);

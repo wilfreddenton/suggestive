@@ -1,13 +1,41 @@
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+}
+.content {
+  height: 100%;
+  position: absolute;
+  top: 0px;
+  width: 100%;
+  left: 0px;
+}
 .container {
   position: relative;
-  max-width: 600px;
+  width: 100%;
+  height: 100%;
+  margin: 0 auto;
+  font-family: monospace;
+  box-sizing: border-box;
+}
+.inner {
+  position: absolute;
+  box-sizing: border-box;
+  left: 0px;
+  width: 100%;
+  bottom: 0px;
+  padding: 18px;
+}
+h1 {
+  max-width: 632px;
   margin: 0 auto;
   padding: 18px;
-  font-family: monospace
+  font-weight: normal;
 }
 #textbox {
   width: 100%;
   position: relative;
+  max-width: 632px;
   box-sizing: border-box;
   height: 50px;
   z-index: 100;
@@ -17,6 +45,9 @@
   resize: none;
   overflow: hidden;
   padding: 8px;
+  display: block;
+  margin: 0 auto;
+  transition: border 100ms;
 }
 #textbox:focus {
   outline: none;
@@ -24,27 +55,29 @@
 }
 #suggestions {
   width: 100%;
-  max-width: 100%;
+  max-width: 632px;
+  margin: 0 auto;
+  display: block;
   position: relative;
   list-style-type: none;
-  margin: 0;
+  margin: 0 auto;
   padding: 0;
 }
 #suggestions li {
+  background: white;
   display: inline-block;
   border-top: 1px solid #ccc;
-  border-right: 1px solid #ccc;
   border-bottom: 1px solid #ccc;
   margin-bottom: -1px;
   padding: 8px;
   transition: background 100ms;
   cursor: pointer;
 }
-#suggestions li:hover {
-  background: #eee;
-}
 #suggestions li:first-child {
   border-left: 1px solid #ccc;
+}
+#suggestions li:last-child {
+  border-right: 1px solid #ccc;
 }
 .suggestion {
   margin-top: 25px;
@@ -57,17 +90,25 @@
   width: 100%;
   left: 0px;
   color: #ccc;
+  transition: top 100ms;
 }
-#history {
+#suggestions li:hover .suggestion-number {
+  top: -25px;
+}
+#history ul {
   width: 100%;
-  max-width: 100%;
+  max-width: 632px;
+  margin: 0 auto 10px auto;
   position: relative;
   font-size:14px;
   list-style-type: none;
-  margin: 0 0 10px 0;
   padding: 0; 
 }
-#history li {
+#history.static {
+  height: 60vh;
+  overflow:scroll;
+}
+#history ul li {
   position: relative;
   padding: 10px;
 }

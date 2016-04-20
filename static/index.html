@@ -6,11 +6,17 @@
     <link href="/static/style.css" rel="stylesheet" />
   </head>
   <body>
-    <div class="container">
-      <h1>Suggestive Typing with N-gram Language Models</h1>
-      <ul id="history"></ul>
-      <ul id="suggestions"></ul>
-      <textarea placeholder="write..." id="textbox" class="suggestive"></textarea>
+    <div class="content">
+      <div class="container">
+        <h1>Suggestive Typing with N-gram Language Models</h1>
+        <div class="inner">
+          <div id="history">
+            <ul></ul>
+          </div>
+          <ul id="suggestions"></ul>
+          <textarea placeholder="write..." id="textbox" class="suggestive"></textarea>
+        </div>
+      </div>
     </div>
     <script src="/static/app.js"></script>
   </body>

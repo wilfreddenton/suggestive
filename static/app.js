@@ -57,8 +57,13 @@
     template.forEach(function (subTemp) {
       var tag = subTemp[0], params = subTemp[1], children = subTemp[2];
       var element = document.createElement(tag);
-      for (var key in params)
-        element[key] = params[key];
+      for (var key in params) {
+        if (key === 'style') {
+          styles = params[key];
+          for (var styleName in styles)
+            element.style[styleName] = styles[styleName];
+        } else { element[key] = params[key]; }
+      }
       if (Array.isArray(children)) {
         var childFrag = this.render(children);
         element.appendChild(childFrag);
@@ -68,18 +73,18 @@
     return docFrag;
   }
   function debounce(func, wait, immediate) {
-	  var timeout;
-	  return function() {
-		  var context = this, args = arguments;
-		  var later = function() {
-			  timeout = null;
-			  if (!immediate) func.apply(context, args);
-		  };
-		  var callNow = immediate && !timeout;
-		  clearTimeout(timeout);
-		  timeout = setTimeout(later, wait);
-		  if (callNow) func.apply(context, args);
-	  };
+    var timeout;
+    return function() {
+      var context = this, args = arguments;
+      var later = function() {
+        timeout = null;
+        if (!immediate) func.apply(context, args);
+      };
+      var callNow = immediate && !timeout;
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+      if (callNow) func.apply(context, args);
+    };
   };
   // initialization
   var state = {
@@ -89,13 +94,17 @@
   };
   var ripples = new Ripples(state);
   var refs = {
+    content: document.querySelector('.content'),
     textbox: document.getElementById('textbox'),
     suggestions: document.getElementById('suggestions'),
-    history: document.getElementById('history')
+    history: document.querySelector('#history ul')
   };
+  var rainbow = function(rel) {
+    return 'hsl(' + (100 - (rel * 100)) + ',66%,80%)';
+  }
   var suggestionTemplate = function(suggestion, i) {
     return (
-      ['li', {className: 'suggestion'}, [
+      ['li', {className: 'suggestion', style: {background: rainbow(suggestion.relevance)}}, [
         ['div', {className: 'suggestion-number'}, i < 9 ? i + 1 : 0],
         ['span', {className: 'suggestion-text'}, suggestion.text]
       ]]
@@ -128,7 +137,7 @@
     xmlHttp.onreadystatechange = function() {
       if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
         ripples.setState({ suggestions: JSON.parse(xmlHttp.responseText).suggestions.sort(function(a, b) {
-          return a.text > b.text;
+          return a.text.toLowerCase() > b.text.toLowerCase();
         }) });
     }
     xmlHttp.open("GET", baseUrl+"/suggestions?text="+ripples.state.text, true);
@@ -144,6 +153,12 @@
       messages.push(message);
       ripples.setState({messages: messages});
       postMessage();
+      if (refs.history.offsetHeight >= refs.content.offsetHeight*0.6) {
+        var parent = refs.history.parentNode;
+        if (!parent.classList.contains('static'))
+          parent.classList.add('static');
+        parent.scrollTop = parent.scrollHeight;
+      }
       refs.textbox.value = '';
       ripples.setState({ text: refs.textbox.value })
       test();
@@ -170,6 +185,8 @@
       if (e.metaKey) {
         var i = parseInt(String.fromCharCode(e.keyCode));
         if (i <= ripples.state.suggestions.length) {
+          if (i === 0 && ripples.state.suggestions.length < 10)
+            return false;
           refs.suggestions.childNodes[i == 0 ? 9 : i - 1].click();
         }
         event.preventDefault();
@@ -183,7 +200,7 @@
     refs.suggestions.appendChild(ripples.render(template));
     Array.prototype.forEach.call(refs.suggestions.childNodes, function(suggestion) {
       suggestion.addEventListener('click', selectHandler, true);
-    })
+    });
   }
   var historyReaction = function() {
     var template = ripples.state.messages.map(messageTemplate);

@@ -6,7 +6,7 @@ import threading
 import os
 import glob
 from collections import Counter
-from data_processor import process_message
+from data_processor import process_post, fix_contractions
 from flask import Flask, request, jsonify
 from unigram import Unigram
 from unigram_excerpt import UnigramExcerpt
@@ -16,18 +16,29 @@ from trigram import Trigram
 from trigram_excerpt import TrigramExcerpt
 app = Flask(__name__)
 
-# train models
-unigram = Unigram('chat_processed.txt')
-unigram_generator = UnigramExcerpt(unigram)
-unigram_lock = threading.Lock()
-bigram = Bigram('chat_processed.txt')
-bigram_generator = BigramExcerpt(bigram)
-bigram_lock = threading.Lock()
-trigram = Trigram('chat_processed.txt')
-trigram_generator = TrigramExcerpt(trigram)
-trigram_lock = threading.Lock()
+def delete_old_models():
+    for filename in glob.glob("*_word_map.dat"):
+        os.remove(filename)
 
+def clear_history():
+    with open('messages.txt', "w") as m:
+        m.write('')
+
+def train_models():
+    unigram = Unigram('chat_processed.txt')
+    bigram = Bigram('chat_processed.txt')
+    trigram = Trigram('chat_processed.txt')
+    return unigram, bigram, trigram
+
+delete_old_models()
+clear_history()
+unigram, bigram, trigram = train_models()
+unigram_lock = threading.Lock()
+bigram_lock = threading.Lock()
+trigram_lock = threading.Lock()
 training_flag = False
+delim = '\n---------\n'
+
 
 class TrainThread(threading.Thread):
     def __init__(self):
@@ -36,13 +47,15 @@ class TrainThread(threading.Thread):
     def _make_corpus(self):
         messages = ''
         with open('messages.txt') as m:
-            messages = " ".join(m.read().split('\n'))
-        messages = process_message(messages)
+            messages = m.read().split(delim)
+        messages = [m.split() for m in messages]
+        messages = map(process_post, messages)
+        messages = delim.join(messages)
         chat = ''
         with open('chat_processed.txt') as c:
             chat = c.read()
         with open('corpus.txt', 'w') as cor:
-            cor.write(chat.strip() + " " + messages.strip())
+            cor.write(chat.strip() + delim + messages)
 
     def run(self):
         global unigram
@@ -51,9 +64,7 @@ class TrainThread(threading.Thread):
         global training_flag
         training_flag = True
         print 'training'
-        # delete old pickles
-        for filename in glob.glob("*_word_map.dat"):
-            os.remove(filename)
+        delete_old_models()
         self._make_corpus()
         new_unigram = Unigram('corpus.txt')
         unigram_lock.acquire()
@@ -76,23 +87,23 @@ class TrainThread(threading.Thread):
 
 @app.route('/')
 def home():
-    # prep message file
-    with open('messages.txt', "w") as m:
-        m.write('')
     return app.send_static_file('index.html')
 
 def filter_suggestions(suggestions):
+    suggestions = [s for s in suggestions if s != delim[1:-1]]
     count = Counter(suggestions)
     ordered_suggestions = count.most_common()
     if len(suggestions) >= 7:
-        high_prob_suggestions = ordered_suggestions[0:4]
-        suggestions = ordered_suggestions[4:]
-        suggestions = random.sample(suggestions, 3 if len(suggestions) >= 3 else len(suggestions))
-        suggestions = high_prob_suggestions + suggestions
+        suggestions = ordered_suggestions[0:7]
+        # high_prob_suggestions = ordered_suggestions[0:4]
+        # suggestions = ordered_suggestions[4:]
+        # suggestions = random.sample(suggestions, 3 if len(suggestions) >= 3 else len(suggestions))
+        # suggestions = high_prob_suggestions + suggestions
     else:
-        suggestions = count.most_common()
-    max_count = ordered_suggestions[0][1]
-    suggestions = [(s[0], s[1] / float(max_count)) for s in suggestions]
+        suggestions = ordered_suggestions
+    if len(ordered_suggestions) > 0:
+        max_count = ordered_suggestions[0][1]
+        suggestions = [(s[0], s[1] / float(max_count)) for s in suggestions]
     return suggestions
 
 @app.route('/api/suggestions', methods=['GET'])
@@ -106,6 +117,8 @@ def suggestions():
         words = []
     words = [word[0].upper()+word[1:] if 'i' == word or 'i\'' in word else word for word in words]
     key = []
+    if len(words) > 0:
+        words = fix_contractions(words)
     # set key
     if len(words) == 1:
         key = words[0]
@@ -136,7 +149,7 @@ def suggestions():
         suggestions = [(s[0][0].upper()+s[0][1:], s[1]) if len(words) == 0 else s for s in suggestions]
     # look at previous messages
     with open('messages.txt') as m:
-        messages = m.readlines()
+        messages = [message for message in m.read().split(delim)]
     if len(messages) > 0:
         if len(messages) > 5:
             messages = messages[-5:]
@@ -157,17 +170,30 @@ def suggestions():
 def message():
     data = request.get_json()
     message = data['message']['text']
+    message = message.replace('\n', ' ')
+    messages = [s.strip() for s in re.split(r'[.?!]+', message) if s != '']
+    messages = [re.sub(r'[_+-.,!?@#$%^&*();\/\\|<>"]+','', m) for m in messages]
     with open('messages.txt', "r+") as m:
-        messages = m.read()
-        messages += message + '\n'
+        old_messages = m.read().split(delim)
+        if old_messages[0] == '':
+            old_messages = old_messages[1:]
+        messages = old_messages + messages
         m.seek(0)
-        m.write(messages)
+        m.write(delim.join(messages))
         m.truncate()
-    messages = messages.strip()
-    if len(messages.split('\n')) % 2 == 0 and not training_flag:
+    if len(messages) % 2 == 0 and not training_flag:
         thread = TrainThread()
         thread.start()
     return jsonify(success=True)
+
+@app.route('/api/reset', methods=['GET'])
+def reset():
+    clear_history()
+    delete_old_models()
+    thread = TrainThread()
+    thread.start()
+    thread.join()
+    return "reset"
 
 if __name__ == '__main__':
     app.run(debug=True)

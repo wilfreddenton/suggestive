@@ -58,7 +58,7 @@
       var tag = subTemp[0], params = subTemp[1], children = subTemp[2];
       var element = document.createElement(tag);
       for (var key in params) {
-        param = params[key];
+        var param = params[key];
         if (typeof param === 'object' && param && !Array.isArray(param)) {
           for (var name in param)
             element[key][name] = param[name];

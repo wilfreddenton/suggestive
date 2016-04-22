@@ -1,2 +1,2 @@
 import nltk
-nltk.download('nps_chat')
+nltk.download('nps_chat','punkt')

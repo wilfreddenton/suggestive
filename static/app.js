@@ -137,7 +137,7 @@
     xmlHttp.onreadystatechange = function() {
       if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
         ripples.setState({ suggestions: JSON.parse(xmlHttp.responseText).suggestions.sort(function(a, b) {
-          return b.text.toLowerCase() - a.text.toLowerCase();
+          return (a.text.toLowerCase() > b.text.toLowerCase()) ? 1 : (a.text.toLowerCase() < b.text.toLowerCase()) ? -1 : 0;
         }) });
     }
     xmlHttp.open("GET", baseUrl+"/suggestions?text="+ripples.state.text, true);

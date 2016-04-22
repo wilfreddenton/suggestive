@@ -108,7 +108,6 @@ def filter_suggestions(suggestions):
 
 @app.route('/api/suggestions', methods=['GET'])
 def suggestions():
-    data = request.get_json()
     text = request.args.get('text').strip().lower()
     sents = [sent.strip() for sent in re.split(r'[.?!]', text)]
     if len(sents) > 0:
@@ -130,6 +129,8 @@ def suggestions():
         if key in trigram.word_map:
             suggestions = trigram.word_map[key]
             suggestions = filter_suggestions(suggestions)
+            if len(suggestions) == 0:
+                key = key[-1] # fallthrough to bigram
         else: # fallthrough to bigram
             key = key[-1]
         trigram_lock.release()
@@ -138,6 +139,8 @@ def suggestions():
         if key in bigram.word_map:
             suggestions = bigram.word_map[key]
             suggestions = filter_suggestions(suggestions)
+            if len(suggestions) == 0:
+                key = [] #fallthrough to unigram
         else: # fallthrough to unigram
             key = []
         bigram_lock.release()

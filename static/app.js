@@ -122,8 +122,8 @@
   var postMessage = function() {
     var xmlHttp = new XMLHttpRequest();
     xmlHttp.onreadystatechange = function() {
-      if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
-        console.log(xmlHttp.responseText)
+      if (xmlHttp.readyState == 4 && !xmlHttp.status == 200)
+        console.log('error posting message');
     }
     xmlHttp.open("POST", baseUrl+"/message", true);
     xmlHttp.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');

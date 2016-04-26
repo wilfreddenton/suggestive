@@ -38,6 +38,7 @@ bigram_lock = threading.Lock()
 trigram_lock = threading.Lock()
 training_flag = False
 delim = '\n---------\n'
+start_token = 'START'
 
 
 class TrainThread(threading.Thread):
@@ -90,7 +91,7 @@ def home():
     return app.send_static_file('index.html')
 
 def filter_suggestions(suggestions):
-    suggestions = [s for s in suggestions if s != delim[1:-1]]
+    suggestions = [s for s in suggestions if s != delim[1:-1] and s!= start_token]
     count = Counter(suggestions)
     ordered_suggestions = count.most_common()
     if len(suggestions) >= 7:
@@ -111,9 +112,9 @@ def suggestions():
     text = request.args.get('text').strip().lower()
     sents = [sent.strip() for sent in re.split(r'[.?!]', text)]
     if len(sents) > 0:
-        words = sents[-1].split()
+        words = [start_token] + sents[-1].split()
     else:
-        words = []
+        words = [start_token]
     words = [word[0].upper()+word[1:] if 'i' == word or 'i\'' in word else word for word in words]
     key = []
     if len(words) > 0:

@@ -145,12 +145,12 @@ def process_post(post):
     text = re.sub(r'(^|\s+)(i\'\w+)(\s+|$)', upcase_contraction, text)
     # strip leading and trailing spaces
     text = text.strip()
-    return text
+    return 'START ' + text
 
 def process(posts):
     posts = split_sentences(posts)
     posts = map(process_post, posts)
-    posts = [post for post in posts if post != '' and re.match(r'^\s+$', post) is None]
+    posts = [post for post in posts if post != '' and re.match(r'^START\s+$', post) is None]
     text = "\n---------\n".join(posts)
     return text
 

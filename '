@@ -142,9 +142,6 @@ def suggestions():
             suggestions = filter_suggestions(suggestions)
             if len(suggestions) == 0:
                 key = [] #fallthrough to unigram
-            else: # upcase first word in sentence suggestions
-                if key == start_token:
-                    suggestions = [(s[0][0].upper()+s[0][1:], s[1]) for s in suggestions]
         else: # fallthrough to unigram
             key = []
         bigram_lock.release()
@@ -153,6 +150,7 @@ def suggestions():
         suggestions = unigram.bag_of_words
         unigram_lock.release()
         suggestions = filter_suggestions(suggestions)
+        suggestions = [(s[0][0].upper()+s[0][1:], s[1]) if len(words) == 0 else s for s in suggestions]
     # look at previous messages
     with open('messages.txt') as m:
         messages = [message for message in m.read().split(delim)]

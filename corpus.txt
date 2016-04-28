@@ -18840,7 +18840,7 @@ START have you been to the tower
 ---------
 START what tower
 ---------
-START the cn tower of course
+START the cn tower
 ---------
 START I have
 ---------

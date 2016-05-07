@@ -9,11 +9,8 @@ from collections import Counter
 from data_processor import process_post, fix_contractions
 from flask import Flask, request, jsonify
 from unigram import Unigram
-from unigram_excerpt import UnigramExcerpt
 from bigram import Bigram
-from bigram_excerpt import BigramExcerpt
 from trigram import Trigram
-from trigram_excerpt import TrigramExcerpt
 app = Flask(__name__)
 
 def delete_old_models():

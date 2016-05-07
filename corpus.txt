@@ -18834,14 +18834,10 @@ START where are you
 ---------
 START I'm in toronto
 ---------
-START toronto is the best place to be
+START toronto is pretty cool
 ---------
-START have you been to the tower
+START have you to the tower
 ---------
 START what tower
 ---------
 START the cn tower
----------
-START I have
----------
-START it's pretty cool
